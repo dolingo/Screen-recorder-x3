@@ -1,0 +1,2088 @@
+name: Build SuperRecorder A15 Pro v2 APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Generate Complete Android Project Files
+        run: |
+          mkdir -p app/src/main/java/com/superrecorder/a15
+          mkdir -p app/src/main/res/drawable
+          mkdir -p app/src/main/res/mipmap-anydpi-v26
+
+          cat << 'EOF' > settings.gradle
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "SuperRecorderA15"
+          include ':app'
+          EOF
+
+          cat << 'EOF' > build.gradle
+          plugins {
+              id 'com.android.application' version '8.2.2' apply false
+              id 'org.jetbrains.kotlin.android' version '1.9.22' apply false
+          }
+          EOF
+
+          cat << 'EOF' > app/build.gradle
+          plugins {
+              id 'com.android.application'
+              id 'org.jetbrains.kotlin.android'
+          }
+
+          android {
+              namespace 'com.superrecorder.a15'
+              compileSdk 34
+
+              defaultConfig {
+                  applicationId "com.superrecorder.a15"
+                  minSdk 26
+                  targetSdk 34
+                  versionCode 2
+                  versionName "2.0-A15Ultra"
+              }
+
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+              kotlinOptions {
+                  jvmTarget = '17'
+              }
+          }
+          EOF
+
+          # 1. Professional Adaptive App Icon Background
+          cat << 'EOF' > app/src/main/res/drawable/ic_launcher_background.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:aapt="http://schemas.android.com/aapt"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <path android:pathData="M0,0h108v108h-108z">
+                  <aapt:attr name="android:fillColor">
+                      <gradient
+                          android:startX="0"
+                          android:startY="0"
+                          android:endX="108"
+                          android:endY="108"
+                          android:type="linear">
+                          <item android:offset="0.0" android:color="#0B0F19" />
+                          <item android:offset="0.5" android:color="#161F33" />
+                          <item android:offset="1.0" android:color="#26120B" />
+                      </gradient>
+                  </aapt:attr>
+              </path>
+              <path
+                  android:fillColor="#14FF6B00"
+                  android:pathData="M54,54m-42,0a42,42 0,1 1,84 0a42,42 0,1 1,-84 0" />
+          </vector>
+          EOF
+
+          # 2. Professional Adaptive App Icon Foreground (Camera Lens + Neon REC Ring)
+          cat << 'EOF' > app/src/main/res/drawable/ic_launcher_foreground.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <!-- Outer Glowing Ring -->
+              <path
+                  android:fillColor="#00000000"
+                  android:strokeColor="#FF6B00"
+                  android:strokeWidth="3.5"
+                  android:pathData="M54,54m-27,0a27,27 0,1 1,54 0a27,27 0,1 1,-54 0" />
+              <!-- Inner Dark Lens Body -->
+              <path
+                  android:fillColor="#1C2433"
+                  android:pathData="M54,54m-22,0a22,22 0,1 1,44 0a22,22 0,1 1,-44 0" />
+              <!-- Center Ruby Recording Core -->
+              <path
+                  android:fillColor="#FF2E4C"
+                  android:pathData="M54,54m-11,0a11,11 0,1 1,22 0a11,11 0,1 1,-22 0" />
+              <!-- Lens Glint Reflection -->
+              <path
+                  android:fillColor="#66FFFFFF"
+                  android:pathData="M47,45m-3.5,0a3.5,3.5 0,1 1,7 0a3.5,3.5 0,1 1,-7 0" />
+              <!-- Top Right Live Indicator Dot -->
+              <path
+                  android:fillColor="#00E676"
+                  android:pathData="M74,34m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+          </vector>
+          EOF
+
+          cat << 'EOF' > app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@drawable/ic_launcher_background" />
+              <foreground android:drawable="@drawable/ic_launcher_foreground" />
+          </adaptive-icon>
+          EOF
+
+          cat << 'EOF' > app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@drawable/ic_launcher_background" />
+              <foreground android:drawable="@drawable/ic_launcher_foreground" />
+          </adaptive-icon>
+          EOF
+
+          cat << 'EOF' > app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+              <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+              <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+              <uses-permission android:name="android.permission.RECORD_AUDIO" />
+              <uses-permission android:name="android.permission.CAMERA" />
+              <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+              <uses-permission android:name="android.permission.VIBRATE" />
+              <uses-permission android:name="android.permission.WAKE_LOCK" />
+              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+
+              <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+              <application
+                  android:allowBackup="true"
+                  android:label="Super Recorder A15"
+                  android:icon="@mipmap/ic_launcher"
+                  android:roundIcon="@mipmap/ic_launcher_round"
+                  android:supportsRtl="true"
+                  android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:configChanges="orientation|screenSize|keyboardHidden|locale|layoutDirection">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+
+                  <service
+                      android:name=".RecorderService"
+                      android:enabled="true"
+                      android:exported="false"
+                      android:foregroundServiceType="mediaProjection" />
+
+              </application>
+          </manifest>
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/superrecorder/a15/RecordingConfig.kt
+          package com.superrecorder.a15
+
+          import android.content.Context
+          import android.content.SharedPreferences
+
+          data class RecordingSettings(
+              val lang: String,
+              val mode: Int,
+              val resolutionIndex: Int,
+              val bitrateMbps: Int,
+              val fps: Int,
+              val useHevc: Boolean,
+              val enableMic: Boolean,
+              val showFloating: Boolean,
+              val enableBrush: Boolean,
+              val enableFacecam: Boolean,
+              val showWatermark: Boolean,
+              val keepScreenAwake: Boolean,
+              val shakeToStop: Boolean,
+              val stopOnScreenOff: Boolean,
+              val countdownSec: Int,
+              val regionLeft: Int,
+              val regionTop: Int,
+              val regionWidth: Int,
+              val regionHeight: Int
+          )
+
+          object PrefsManager {
+              private const val PREFS_NAME = "super_recorder_a15_v2_prefs"
+
+              private fun prefs(context: Context): SharedPreferences =
+                  context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+              fun saveSettings(context: Context, s: RecordingSettings) {
+                  prefs(context).edit().apply {
+                      putString("lang", s.lang)
+                      putInt("mode", s.mode)
+                      putInt("res", s.resolutionIndex)
+                      putInt("bitrate", s.bitrateMbps)
+                      putInt("fps", s.fps)
+                      putBoolean("hevc", s.useHevc)
+                      putBoolean("mic", s.enableMic)
+                      putBoolean("floating", s.showFloating)
+                      putBoolean("brush", s.enableBrush)
+                      putBoolean("facecam", s.enableFacecam)
+                      putBoolean("watermark", s.showWatermark)
+                      putBoolean("keep_awake", s.keepScreenAwake)
+                      putBoolean("shake", s.shakeToStop)
+                      putBoolean("screen_off", s.stopOnScreenOff)
+                      putInt("countdown", s.countdownSec)
+                      putInt("r_left", s.regionLeft)
+                      putInt("r_top", s.regionTop)
+                      putInt("r_width", s.regionWidth)
+                      putInt("r_height", s.regionHeight)
+                      apply()
+                  }
+              }
+
+              fun loadSettings(context: Context): RecordingSettings {
+                  val p = prefs(context)
+                  return RecordingSettings(
+                      lang = p.getString("lang", "ar") ?: "ar",
+                      mode = p.getInt("mode", 0),
+                      resolutionIndex = p.getInt("res", 0),
+                      bitrateMbps = p.getInt("bitrate", 12),
+                      fps = p.getInt("fps", 60),
+                      useHevc = p.getBoolean("hevc", false),
+                      enableMic = p.getBoolean("mic", true),
+                      showFloating = p.getBoolean("floating", true),
+                      enableBrush = p.getBoolean("brush", true),
+                      enableFacecam = p.getBoolean("facecam", false),
+                      showWatermark = p.getBoolean("watermark", false),
+                      keepScreenAwake = p.getBoolean("keep_awake", true),
+                      shakeToStop = p.getBoolean("shake", true),
+                      stopOnScreenOff = p.getBoolean("screen_off", true),
+                      countdownSec = p.getInt("countdown", 3),
+                      regionLeft = p.getInt("r_left", 140),
+                      regionTop = p.getInt("r_top", 400),
+                      regionWidth = p.getInt("r_width", 800),
+                      regionHeight = p.getInt("r_height", 1000)
+                  )
+              }
+
+              fun align16(value: Int): Int {
+                  val aligned = (value / 16) * 16
+                  return if (aligned < 160) 160 else aligned
+              }
+          }
+
+          object AppStrings {
+              fun get(lang: String, key: String): String {
+                  val isAr = lang == "ar"
+                  return when (key) {
+                      "app_title" -> "SUPER RECORDER ULTRA"
+                      "app_subtitle" -> if (isAr) "إصدار احترافي مخصص لـ Galaxy A15 • 90Hz" else "Pro Studio Edition for Galaxy A15 • 90Hz"
+                      "lang_btn" -> if (isAr) "🌐 EN" else "🌐 عربي"
+                      "videos_btn" -> if (isAr) "🎬 الفيديوهات" else "🎬 Videos"
+                      "presets_title" -> if (isAr) "⚡ الأوضاع السريعة الجاهزة" else "⚡ Quick Studio Presets"
+                      "preset_gaming" -> if (isAr) "🎮 ألعاب 90Hz" else "🎮 Gaming 90Hz"
+                      "preset_tutorial" -> if (isAr) "🎙️ شرح + كاميرا" else "🎙️ Tutorial + Cam"
+                      "preset_cinema" -> if (isAr) "🎬 سينمائي فائق" else "🎬 Cinema Ultra"
+                      "preset_eco" -> if (isAr) "🍃 توفير المساحة" else "🍃 Compact Size"
+                      "preset_applied" -> if (isAr) "تم تطبيق الوضع بنجاح" else "Preset applied successfully"
+
+                      "sec_mode" -> if (isAr) "1. نمط وأبعاد التصوير" else "1. Capture Mode & Aspect"
+                      "mode_portrait" -> if (isAr) "عمودي\nPortrait" else "Portrait\nVertical"
+                      "mode_landscape" -> if (isAr) "أفقي للألعاب\nLandscape" else "Landscape\nGaming"
+                      "mode_region" -> if (isAr) "تخصيص منطقة\nCustom Area" else "Custom Area\nRegion"
+                      "region_info" -> if (isAr) "الأبعاد المحددة:" else "Selected Region:"
+                      "btn_select_region" -> if (isAr) "⊹ تحديد منطقة التصوير على الشاشة" else "⊹ Select Capture Frame on Screen"
+                      "confirm_region" -> if (isAr) "✓ اعتماد هذه المنطقة" else "✓ Confirm Capture Area"
+                      "region_box_label" -> if (isAr) "منطقة التصوير:" else "Capture Area:"
+
+                      "sec_video" -> if (isAr) "2. هندسة الفيديو (الدقة • الجودة • الإطارات)" else "2. Video Engine (Resolution • Bitrate • FPS)"
+                      "lbl_res" -> if (isAr) "دقة الفيديو (Resolution):" else "Video Resolution:"
+                      "lbl_bitrate" -> if (isAr) "معدل تدفق البيانات (Bitrate Mbps):" else "Video Bitrate (Mbps):"
+                      "lbl_fps" -> if (isAr) "معدل الإطارات (Frame Rate):" else "Frame Rate (FPS):"
+                      "lbl_codec" -> if (isAr) "ترميز الفيديو (Video Codec):" else "Video Encoder Codec:"
+                      "codec_h264" -> if (isAr) "H.264 AVC\n(توافق قياسي)" else "H.264 AVC\n(Max Compatibility)"
+                      "codec_h265" -> if (isAr) "H.265 HEVC\n(حجم أقل بـ 45%)" else "H.265 HEVC\n(45% Smaller File)"
+
+                      "sec_countdown" -> if (isAr) "3. المؤقت التنازلي قبل البدء" else "3. Countdown Timer"
+                      "cd_0" -> if (isAr) "فوري (0s)" else "Instant (0s)"
+                      "cd_3" -> if (isAr) "3 ثوانٍ" else "3 Sec"
+                      "cd_5" -> if (isAr) "5 ثوانٍ" else "5 Sec"
+                      "cd_10" -> if (isAr) "10 ثوانٍ" else "10 Sec"
+
+                      "sec_features" -> if (isAr) "4. الأدوات والميزات الاحترافية" else "4. Pro Studio Tools & Features"
+                      "t_mic" -> if (isAr) "تسجيل صوت المايكروفون (Microphone)" else "Record Microphone Audio"
+                      "d_mic" -> if (isAr) "دمج صوتك الخارجي بنقاء AAC مع الفيديو" else "Capture crisp AAC voice commentary"
+                      "t_facecam" -> if (isAr) "الكاميرا الأمامية العائمة (Facecam PiP)" else "Floating Front Camera (Facecam PiP)"
+                      "d_facecam" -> if (isAr) "إظهار نافذة تفاعلية للكاميرا الأمامية قابلة للتحريك" else "Show movable live selfie camera overlay"
+                      "t_brush" -> if (isAr) "أداة الفرشاة والرسم المباشر (Screen Brush)" else "Live Screen Drawing Brush"
+                      "d_brush" -> if (isAr) "الرسم والتأشير بألوان متعددة فوق الشاشة أثناء الشرح" else "Draw and annotate directly on screen"
+                      "t_floating" -> if (isAr) "النافذة العائمة الذكية (Floating Dock)" else "Smart Floating Control Dock"
+                      "d_floating" -> if (isAr) "شريط عائم للتحكم المؤقت، الفرشاة، الكاميرا، والإيقاف" else "Floating pill for timer, pause, brush & stop"
+                      "t_watermark" -> if (isAr) "العلامة المائية المباشرة (Live Watermark)" else "Studio Live Watermark Badge"
+                      "d_watermark" -> if (isAr) "إظهار شعار أنيق قابل للتحريك داخل التسجيل" else "Show sleek movable watermark badge on screen"
+                      "t_awake" -> if (isAr) "منع انطفاء الشاشة أثناء التصوير (Keep Awake)" else "Keep Screen Awake During Recording"
+                      "d_awake" -> if (isAr) "منع قفل أو خفوت إضاءة الشاشة أثناء التسجيل الطويل" else "Prevent screen dimming while recording"
+                      "t_shake" -> if (isAr) "هز الهاتف لإيقاف التسجيل (Shake to Stop)" else "Shake Phone to Stop Recording"
+                      "d_shake" -> if (isAr) "إنهاء وحفظ الفيديو فوراً بمجرد هز الهاتف" else "Finish and save video by shaking device"
+                      "t_screen_off" -> if (isAr) "حفظ تلقائي عند قفل الشاشة" else "Auto-Save on Screen Lock"
+                      "d_screen_off" -> if (isAr) "إيقاف وحفظ الفيديو بأمان فور إغلاق الشاشة" else "Safely stop and save when screen turns off"
+
+                      "btn_start" -> if (isAr) "●   بدء تصوير الشاشة الآن" else "●   START SCREEN RECORDING"
+                      "btn_stop" -> if (isAr) "■   إيقاف التسجيل الحالي وحفظ الفيديو" else "■   STOP & SAVE CURRENT RECORDING"
+
+                      "need_overlay" -> if (isAr) "يرجى تفعيل إذن الظهور فوق التطبيقات أولاً" else "Please grant Display Over Other Apps permission"
+                      "prep_notif" -> if (isAr) "جاري التحضير لتصوير الشاشة..." else "Preparing screen recording..."
+                      "rec_notif" -> if (isAr) "جاري تصوير الشاشة الآن..." else "Recording screen in progress..."
+                      "pause_notif" -> if (isAr) "التسجيل متوقف مؤقتاً" else "Recording paused"
+                      "act_pause" -> if (isAr) "إيقاف مؤقت" else "Pause"
+                      "act_resume" -> if (isAr) "استئناف" else "Resume"
+                      "act_stop" -> if (isAr) "إنهاء وحفظ" else "Stop & Save"
+                      "saved_toast" -> if (isAr) "✅ تم حفظ الفيديو في الأستوديو (SuperRecorder_A15)" else "✅ Video saved to Gallery (SuperRecorder_A15)"
+                      "hide_float_toast" -> if (isAr) "تم إخفاء الأداة العائمة (أوقف من الإشعارات أو هز الهاتف)" else "Floating dock hidden (Stop via notification or shake)"
+                      "clear_brush" -> if (isAr) "مسح" else "Clear"
+                      "no_videos" -> if (isAr) "لا توجد فيديوهات مسجلة في المجلد الداخلي بعد.\nتُحفظ الفيديوهات تلقائياً في معرض الصور (Gallery -> Movies/SuperRecorder_A15)." else "No cached videos found.\nVideos are published directly to your Gallery (Movies/SuperRecorder_A15)."
+                      "close" -> if (isAr) "إغلاق" else "Close"
+                      else -> key
+                  }
+              }
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/superrecorder/a15/MainActivity.kt
+          package com.superrecorder.a15
+
+          import android.Manifest
+          import android.app.Activity
+          import android.app.AlertDialog
+          import android.content.Context
+          import android.content.Intent
+          import android.content.pm.PackageManager
+          import android.graphics.*
+          import android.graphics.drawable.GradientDrawable
+          import android.media.projection.MediaProjectionManager
+          import android.net.Uri
+          import android.os.Build
+          import android.os.Bundle
+          import android.os.Environment
+          import android.provider.MediaStore
+          import android.provider.Settings
+          import android.util.TypedValue
+          import android.view.Gravity
+          import android.view.MotionEvent
+          import android.view.View
+          import android.view.WindowManager
+          import android.widget.*
+          import kotlin.math.hypot
+
+          class MainActivity : Activity() {
+
+              private lateinit var projectionManager: MediaProjectionManager
+              private lateinit var settings: RecordingSettings
+
+              private var currentLang = "ar"
+              private var selectedMode = 0
+              private var selectedRes = 0
+              private var selectedBitrate = 12
+              private var selectedFps = 60
+              private var selectedHevc = false
+              private var selectedCountdown = 3
+
+              private lateinit var swMic: Switch
+              private lateinit var swFacecam: Switch
+              private lateinit var swBrush: Switch
+              private lateinit var swFloating: Switch
+              private lateinit var swWatermark: Switch
+              private lateinit var swAwake: Switch
+              private lateinit var swShake: Switch
+              private lateinit var swScreenOff: Switch
+              private lateinit var tvRegionInfo: TextView
+              private lateinit var btnSelectRegion: Button
+
+              private var regionOverlayView: View? = null
+
+              companion object {
+                  private const val REQ_MEDIA_PROJECTION = 1001
+                  private const val REQ_PERMISSIONS = 1002
+                  private const val REQ_OVERLAY = 1003
+              }
+
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+                  projectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+                  loadStateFromPrefs()
+
+                  window.statusBarColor = Color.parseColor("#090D16")
+                  window.navigationBarColor = Color.parseColor("#090D16")
+
+                  rebuildScreen()
+              }
+
+              private fun loadStateFromPrefs() {
+                  settings = PrefsManager.loadSettings(this)
+                  currentLang = settings.lang
+                  selectedMode = settings.mode
+                  selectedRes = settings.resolutionIndex
+                  selectedBitrate = settings.bitrateMbps
+                  selectedFps = settings.fps
+                  selectedHevc = settings.useHevc
+                  selectedCountdown = settings.countdownSec
+              }
+
+              private fun tr(key: String): String = AppStrings.get(currentLang, key)
+
+              private fun rebuildScreen() {
+                  window.decorView.layoutDirection =
+                      if (currentLang == "ar") View.LAYOUT_DIRECTION_RTL else View.LAYOUT_DIRECTION_LTR
+                  setContentView(buildDashboardUI())
+              }
+
+              private fun buildDashboardUI(): View {
+                  val rootScroll = ScrollView(this).apply {
+                      setBackgroundColor(Color.parseColor("#090D16"))
+                      isFillViewport = true
+                  }
+
+                  val container = LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      setPadding(dp(16), dp(16), dp(16), dp(32))
+                  }
+
+                  // Top Modern App Header Card
+                  val headerCard = LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      background = GradientDrawable(
+                          GradientDrawable.Orientation.TL_BR,
+                          intArrayOf(Color.parseColor("#161F33"), Color.parseColor("#0F1523"))
+                      ).apply {
+                          cornerRadius = dp(20).toFloat()
+                          setStroke(dp(1), Color.parseColor("#FF6B00"))
+                      }
+                      setPadding(dp(16), dp(16), dp(16), dp(16))
+                  }
+
+                  val topRow = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      gravity = Gravity.CENTER_VERTICAL
+                  }
+
+                  val appLogo = ImageView(this).apply {
+                      setImageResource(R.drawable.ic_launcher_foreground)
+                      background = roundedBg("#1E293B", "#FF6B00", 14, 1)
+                      setPadding(dp(4), dp(4), dp(4), dp(4))
+                      layoutParams = LinearLayout.LayoutParams(dp(48), dp(48))
+                  }
+
+                  val titleCol = LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                          marginStart = dp(12)
+                          marginEnd = dp(8)
+                      }
+                  }
+
+                  val tvTitle = TextView(this).apply {
+                      text = tr("app_title")
+                      setTextColor(Color.parseColor("#FF7B00"))
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+                      paint.isFakeBoldText = true
+                  }
+
+                  val tvSub = TextView(this).apply {
+                      text = tr("app_subtitle")
+                      setTextColor(Color.parseColor("#94A3B8"))
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
+                  }
+
+                  titleCol.addView(tvTitle)
+                  titleCol.addView(tvSub)
+
+                  val btnLang = TextView(this).apply {
+                      text = tr("lang_btn")
+                      setTextColor(Color.WHITE)
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                      paint.isFakeBoldText = true
+                      background = roundedBg("#1E293B", "#38BDF8", 10, 1)
+                      setPadding(dp(12), dp(8), dp(12), dp(8))
+                      setOnClickListener {
+                          currentLang = if (currentLang == "ar") "en" else "ar"
+                          saveCurrentStateToPrefs()
+                          rebuildScreen()
+                      }
+                  }
+
+                  topRow.addView(appLogo)
+                  topRow.addView(titleCol)
+                  topRow.addView(btnLang)
+                  headerCard.addView(topRow)
+
+                  // Quick Action Bar inside Header (Gallery Access)
+                  val galleryBtn = TextView(this).apply {
+                      text = tr("videos_btn")
+                      gravity = Gravity.CENTER
+                      setTextColor(Color.parseColor("#E2E8F0"))
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                      paint.isFakeBoldText = true
+                      background = roundedBg("#1E293B", "#334155", 10, 1)
+                      setPadding(dp(10), dp(8), dp(10), dp(8))
+                      val lp = LinearLayout.LayoutParams(
+                          LinearLayout.LayoutParams.MATCH_PARENT,
+                          LinearLayout.LayoutParams.WRAP_CONTENT
+                      ).apply { topMargin = dp(12) }
+                      layoutParams = lp
+                      setOnClickListener { openGalleryFolder() }
+                  }
+                  headerCard.addView(galleryBtn)
+                  container.addView(headerCard, marginParams(bottom = 14))
+
+                  // Quick Presets Bar
+                  val presetCard = createSectionCard(tr("presets_title"), "#38BDF8")
+                  val presetRow = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      weightSum = 4f
+                  }
+                  val presets = listOf(
+                      Triple(tr("preset_gaming"), "#FF6B00") {
+                          selectedMode = 1; selectedRes = 0; selectedBitrate = 16; selectedFps = 90
+                          swMic.isChecked = true; swFacecam.isChecked = false
+                      },
+                      Triple(tr("preset_tutorial"), "#8B5CF6") {
+                          selectedMode = 0; selectedRes = 0; selectedBitrate = 12; selectedFps = 60
+                          swMic.isChecked = true; swFacecam.isChecked = true; swBrush.isChecked = true
+                      },
+                      Triple(tr("preset_cinema"), "#10B981") {
+                          selectedMode = 1; selectedRes = 0; selectedBitrate = 16; selectedFps = 60; selectedHevc = true
+                      },
+                      Triple(tr("preset_eco"), "#0EA5E9") {
+                          selectedRes = 1; selectedBitrate = 4; selectedFps = 30; selectedHevc = true
+                      }
+                  )
+                  presets.forEach { (label, accent, action) ->
+                      val chip = TextView(this).apply {
+                          text = label
+                          gravity = Gravity.CENTER
+                          setTextColor(Color.WHITE)
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
+                          paint.isFakeBoldText = true
+                          background = roundedBg("#172033", accent, 10, 1)
+                          setPadding(dp(4), dp(10), dp(4), dp(10))
+                          setOnClickListener {
+                              action()
+                              saveCurrentStateToPrefs()
+                              Toast.makeText(this@MainActivity, tr("preset_applied"), Toast.LENGTH_SHORT).show()
+                              rebuildScreen()
+                          }
+                      }
+                      val lp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f).apply {
+                          setMargins(dp(3), dp(2), dp(3), dp(2))
+                      }
+                      presetRow.addView(chip, lp)
+                  }
+                  presetCard.addView(presetRow)
+                  container.addView(presetCard, marginParams(bottom = 14))
+
+                  // 1. Capture Mode Section
+                  val modeCard = createSectionCard(tr("sec_mode"), "#FF6B00")
+                  val modeLabels = listOf(tr("mode_portrait"), tr("mode_landscape"), tr("mode_region"))
+                  modeCard.addView(createSegmentedButtons(modeLabels, selectedMode) { index ->
+                      selectedMode = index
+                      btnSelectRegion.visibility = if (index == 2) View.VISIBLE else View.GONE
+                      tvRegionInfo.visibility = if (index == 2) View.VISIBLE else View.GONE
+                  })
+
+                  tvRegionInfo = TextView(this).apply {
+                      text = "${tr("region_info")} ${settings.regionWidth} × ${settings.regionHeight} px"
+                      setTextColor(Color.parseColor("#38BDF8"))
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+                      setPadding(0, dp(10), 0, dp(6))
+                      visibility = if (selectedMode == 2) View.VISIBLE else View.GONE
+                  }
+                  btnSelectRegion = Button(this).apply {
+                      text = tr("btn_select_region")
+                      setTextColor(Color.WHITE)
+                      background = roundedBg("#0284C7", "#38BDF8", 12, 1)
+                      visibility = if (selectedMode == 2) View.VISIBLE else View.GONE
+                      setOnClickListener { openInteractiveRegionSelector() }
+                  }
+                  modeCard.addView(tvRegionInfo)
+                  modeCard.addView(btnSelectRegion)
+                  container.addView(modeCard, marginParams(bottom = 14))
+
+                  // 2. Video Engine Section
+                  val videoCard = createSectionCard(tr("sec_video"), "#FF6B00")
+
+                  videoCard.addView(createLabel(tr("lbl_res")))
+                  val resOptions = listOf("1080p FHD+\n(1080×2340)", "720p HD+\n(720×1560)", "480p SD\n(480×1040)")
+                  videoCard.addView(createSegmentedButtons(resOptions, selectedRes) { selectedRes = it })
+
+                  videoCard.addView(createLabel(tr("lbl_bitrate")))
+                  val bitrateValues = listOf(20, 16, 12, 8, 4)
+                  val bitrateLabels = listOf("20M\nExtreme", "16M\nUltra", "12M\nHigh+", "8M\nStandard", "4M\nLight")
+                  val initialBitrateIdx = bitrateValues.indexOf(selectedBitrate).let { if (it == -1) 2 else it }
+                  videoCard.addView(createSegmentedButtons(bitrateLabels, initialBitrateIdx) {
+                      selectedBitrate = bitrateValues[it]
+                  })
+
+                  videoCard.addView(createLabel(tr("lbl_fps")))
+                  val fpsValues = listOf(90, 60, 30, 24)
+                  val fpsLabels = listOf("90 FPS\nA15 Max", "60 FPS\nSmooth", "30 FPS\nStandard", "24 FPS\nCinema")
+                  val initialFpsIdx = fpsValues.indexOf(selectedFps).let { if (it == -1) 1 else it }
+                  videoCard.addView(createSegmentedButtons(fpsLabels, initialFpsIdx) {
+                      selectedFps = fpsValues[it]
+                  })
+
+                  videoCard.addView(createLabel(tr("lbl_codec")))
+                  val codecLabels = listOf(tr("codec_h264"), tr("codec_h265"))
+                  videoCard.addView(createSegmentedButtons(codecLabels, if (selectedHevc) 1 else 0) {
+                      selectedHevc = (it == 1)
+                  })
+
+                  container.addView(videoCard, marginParams(bottom = 14))
+
+                  // 3. Countdown Section
+                  val countdownCard = createSectionCard(tr("sec_countdown"), "#FF6B00")
+                  val cdValues = listOf(0, 3, 5, 10)
+                  val cdLabels = listOf(tr("cd_0"), tr("cd_3"), tr("cd_5"), tr("cd_10"))
+                  val initialCdIdx = cdValues.indexOf(selectedCountdown).coerceAtLeast(0)
+                  countdownCard.addView(createSegmentedButtons(cdLabels, initialCdIdx) {
+                      selectedCountdown = cdValues[it]
+                  })
+                  container.addView(countdownCard, marginParams(bottom = 14))
+
+                  // 4. Pro Features & Toggles
+                  val proCard = createSectionCard(tr("sec_features"), "#10B981")
+
+                  swMic = createToggleRow(proCard, tr("t_mic"), tr("d_mic"), settings.enableMic)
+                  swFacecam = createToggleRow(proCard, tr("t_facecam"), tr("d_facecam"), settings.enableFacecam)
+                  swBrush = createToggleRow(proCard, tr("t_brush"), tr("d_brush"), settings.enableBrush)
+                  swFloating = createToggleRow(proCard, tr("t_floating"), tr("d_floating"), settings.showFloating)
+                  swWatermark = createToggleRow(proCard, tr("t_watermark"), tr("d_watermark"), settings.showWatermark)
+                  swAwake = createToggleRow(proCard, tr("t_awake"), tr("d_awake"), settings.keepScreenAwake)
+                  swShake = createToggleRow(proCard, tr("t_shake"), tr("d_shake"), settings.shakeToStop)
+                  swScreenOff = createToggleRow(proCard, tr("t_screen_off"), tr("d_screen_off"), settings.stopOnScreenOff)
+
+                  container.addView(proCard, marginParams(bottom = 20))
+
+                  // Action Buttons
+                  val btnStart = Button(this).apply {
+                      text = tr("btn_start")
+                      setTextColor(Color.WHITE)
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+                      paint.isFakeBoldText = true
+                      background = GradientDrawable(
+                          GradientDrawable.Orientation.LEFT_RIGHT,
+                          intArrayOf(Color.parseColor("#FF5500"), Color.parseColor("#FF8800"))
+                      ).apply {
+                          cornerRadius = dp(16).toFloat()
+                      }
+                      setPadding(0, dp(16), 0, dp(16))
+                      setOnClickListener { checkPermissionsAndStart() }
+                  }
+                  container.addView(btnStart, marginParams(bottom = 12))
+
+                  val btnStopService = Button(this).apply {
+                      text = tr("btn_stop")
+                      setTextColor(Color.parseColor("#FCA5A5"))
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+                      paint.isFakeBoldText = true
+                      background = roundedBg("#1E1B24", "#EF4444", 14, 1)
+                      setPadding(0, dp(14), 0, dp(14))
+                      setOnClickListener {
+                          val stopIntent = Intent(this@MainActivity, RecorderService::class.java).apply {
+                              action = RecorderService.ACTION_STOP
+                          }
+                          startService(stopIntent)
+                      }
+                  }
+                  container.addView(btnStopService)
+
+                  rootScroll.addView(container)
+                  return rootScroll
+              }
+
+              private fun openGalleryFolder() {
+                  try {
+                      val intent = Intent(Intent.ACTION_VIEW).apply {
+                          setDataAndType(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, "video/*")
+                          addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                      }
+                      startActivity(intent)
+                  } catch (_: Exception) {
+                      AlertDialog.Builder(this)
+                          .setTitle(tr("videos_btn"))
+                          .setMessage(tr("no_videos"))
+                          .setPositiveButton(tr("close"), null)
+                          .show()
+                  }
+              }
+
+              private fun openInteractiveRegionSelector() {
+                  if (!Settings.canDrawOverlays(this)) {
+                      Toast.makeText(this, tr("need_overlay"), Toast.LENGTH_LONG).show()
+                      startActivityForResult(
+                          Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")),
+                          REQ_OVERLAY
+                      )
+                      return
+                  }
+                  if (regionOverlayView != null) return
+
+                  val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                  val dm = resources.displayMetrics
+
+                  var boxLeft = settings.regionLeft.toFloat()
+                  var boxTop = settings.regionTop.toFloat()
+                  var boxRight = (settings.regionLeft + settings.regionWidth).toFloat()
+                  var boxBottom = (settings.regionTop + settings.regionHeight).toFloat()
+
+                  val selectorView = object : FrameLayout(this) {
+                      private val dimPaint = Paint().apply { color = Color.argb(165, 0, 0, 0) }
+                      private val clearPaint = Paint().apply {
+                          color = Color.TRANSPARENT
+                          xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+                      }
+                      private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                          color = Color.parseColor("#FF7B00")
+                          style = Paint.Style.STROKE
+                          strokeWidth = dp(3).toFloat()
+                      }
+                      private val handlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                          color = Color.parseColor("#38BDF8")
+                          style = Paint.Style.FILL
+                      }
+                      private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                          color = Color.WHITE
+                          textSize = dp(14).toFloat()
+                          isFakeBoldText = true
+                      }
+
+                      private var dragMode = 0
+                      private var lastX = 0f
+                      private var lastY = 0f
+
+                      init {
+                          setWillNotDraw(false)
+                          setLayerType(LAYER_TYPE_SOFTWARE, null)
+                      }
+
+                      override fun onDraw(canvas: Canvas) {
+                          super.onDraw(canvas)
+                          canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), dimPaint)
+                          canvas.drawRect(boxLeft, boxTop, boxRight, boxBottom, clearPaint)
+                          canvas.drawRect(boxLeft, boxTop, boxRight, boxBottom, borderPaint)
+
+                          val r = dp(11).toFloat()
+                          canvas.drawCircle(boxLeft, boxTop, r, handlePaint)
+                          canvas.drawCircle(boxRight, boxBottom, r, handlePaint)
+
+                          val w = PrefsManager.align16((boxRight - boxLeft).toInt())
+                          val h = PrefsManager.align16((boxBottom - boxTop).toInt())
+                          canvas.drawText(
+                              "${tr("region_box_label")} $w × $h",
+                              boxLeft + dp(10),
+                              (boxTop - dp(12)).coerceAtLeast(dp(32).toFloat()),
+                              textPaint
+                          )
+                      }
+
+                      override fun onTouchEvent(event: MotionEvent): Boolean {
+                          val x = event.x
+                          val y = event.y
+                          val touchRadius = dp(42).toFloat()
+
+                          when (event.action) {
+                              MotionEvent.ACTION_DOWN -> {
+                                  lastX = x
+                                  lastY = y
+                                  dragMode = when {
+                                      hypot((x - boxRight).toDouble(), (y - boxBottom).toDouble()) < touchRadius -> 2
+                                      hypot((x - boxLeft).toDouble(), (y - boxTop).toDouble()) < touchRadius -> 3
+                                      x in boxLeft..boxRight && y in boxTop..boxBottom -> 1
+                                      else -> 0
+                                  }
+                                  return true
+                              }
+                              MotionEvent.ACTION_MOVE -> {
+                                  val dx = x - lastX
+                                  val dy = y - lastY
+                                  when (dragMode) {
+                                      1 -> {
+                                          val bw = boxRight - boxLeft
+                                          val bh = boxBottom - boxTop
+                                          boxLeft = (boxLeft + dx).coerceIn(0f, dm.widthPixels - bw)
+                                          boxTop = (boxTop + dy).coerceIn(0f, dm.heightPixels - bh)
+                                          boxRight = boxLeft + bw
+                                          boxBottom = boxTop + bh
+                                      }
+                                      2 -> {
+                                          boxRight = (boxRight + dx).coerceIn(boxLeft + dp(140), dm.widthPixels.toFloat())
+                                          boxBottom = (boxBottom + dy).coerceIn(boxTop + dp(140), dm.heightPixels.toFloat())
+                                      }
+                                      3 -> {
+                                          boxLeft = (boxLeft + dx).coerceIn(0f, boxRight - dp(140))
+                                          boxTop = (boxTop + dy).coerceIn(0f, boxBottom - dp(140))
+                                      }
+                                  }
+                                  lastX = x
+                                  lastY = y
+                                  invalidate()
+                                  return true
+                              }
+                              MotionEvent.ACTION_UP -> dragMode = 0
+                          }
+                          return super.onTouchEvent(event)
+                      }
+                  }
+
+                  val btnConfirm = Button(this).apply {
+                      text = tr("confirm_region")
+                      setTextColor(Color.WHITE)
+                      background = roundedBg("#10B981", "#34D399", 14, 2)
+                      setPadding(dp(22), dp(12), dp(22), dp(12))
+                      setOnClickListener {
+                          val alignedW = PrefsManager.align16((boxRight - boxLeft).toInt())
+                          val alignedH = PrefsManager.align16((boxBottom - boxTop).toInt())
+                          settings = settings.copy(
+                              regionLeft = boxLeft.toInt(),
+                              regionTop = boxTop.toInt(),
+                              regionWidth = alignedW,
+                              regionHeight = alignedH
+                          )
+                          PrefsManager.saveSettings(this@MainActivity, settings)
+                          tvRegionInfo.text = "${tr("region_info")} $alignedW × $alignedH px"
+                          wm.removeView(regionOverlayView)
+                          regionOverlayView = null
+                      }
+                  }
+
+                  val lpBtn = FrameLayout.LayoutParams(
+                      FrameLayout.LayoutParams.WRAP_CONTENT,
+                      FrameLayout.LayoutParams.WRAP_CONTENT
+                  ).apply {
+                      gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+                      bottomMargin = dp(48)
+                  }
+                  selectorView.addView(btnConfirm, lpBtn)
+
+                  val overlayParams = WindowManager.LayoutParams(
+                      WindowManager.LayoutParams.MATCH_PARENT,
+                      WindowManager.LayoutParams.MATCH_PARENT,
+                      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                          WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                      else
+                          @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE,
+                      WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                      PixelFormat.TRANSLUCENT
+                  )
+
+                  regionOverlayView = selectorView
+                  wm.addView(selectorView, overlayParams)
+              }
+
+              private fun saveCurrentStateToPrefs() {
+                  if (!::swMic.isInitialized) return
+                  settings = settings.copy(
+                      lang = currentLang,
+                      mode = selectedMode,
+                      resolutionIndex = selectedRes,
+                      bitrateMbps = selectedBitrate,
+                      fps = selectedFps,
+                      useHevc = selectedHevc,
+                      enableMic = swMic.isChecked,
+                      enableFacecam = swFacecam.isChecked,
+                      enableBrush = swBrush.isChecked,
+                      showFloating = swFloating.isChecked,
+                      showWatermark = swWatermark.isChecked,
+                      keepScreenAwake = swAwake.isChecked,
+                      shakeToStop = swShake.isChecked,
+                      stopOnScreenOff = swScreenOff.isChecked,
+                      countdownSec = selectedCountdown
+                  )
+                  PrefsManager.saveSettings(this, settings)
+              }
+
+              private fun checkPermissionsAndStart() {
+                  saveCurrentStateToPrefs()
+
+                  val needsOverlay = settings.showFloating || settings.enableBrush ||
+                          settings.enableFacecam || settings.showWatermark ||
+                          settings.countdownSec > 0 || settings.mode == 2
+
+                  if (needsOverlay && !Settings.canDrawOverlays(this)) {
+                      Toast.makeText(this, tr("need_overlay"), Toast.LENGTH_LONG).show()
+                      val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
+                      startActivityForResult(intent, REQ_OVERLAY)
+                      return
+                  }
+
+                  val neededPerms = mutableListOf<String>()
+                  if (settings.enableMic && checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                      neededPerms.add(Manifest.permission.RECORD_AUDIO)
+                  }
+                  if (settings.enableFacecam && checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                      neededPerms.add(Manifest.permission.CAMERA)
+                  }
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                      checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+                  ) {
+                      neededPerms.add(Manifest.permission.POST_NOTIFICATIONS)
+                  }
+
+                  if (neededPerms.isNotEmpty()) {
+                      requestPermissions(neededPerms.toTypedArray(), REQ_PERMISSIONS)
+                      return
+                  }
+
+                  requestScreenCapture()
+              }
+
+              private fun requestScreenCapture() {
+                  startActivityForResult(projectionManager.createScreenCaptureIntent(), REQ_MEDIA_PROJECTION)
+              }
+
+              override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+                  super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+                  if (requestCode == REQ_PERMISSIONS) {
+                      requestScreenCapture()
+                  }
+              }
+
+              override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+                  super.onActivityResult(requestCode, resultCode, data)
+                  if (requestCode == REQ_OVERLAY) {
+                      checkPermissionsAndStart()
+                  } else if (requestCode == REQ_MEDIA_PROJECTION && resultCode == RESULT_OK && data != null) {
+                      val serviceIntent = Intent(this, RecorderService::class.java).apply {
+                          action = RecorderService.ACTION_START
+                          putExtra(RecorderService.EXTRA_RESULT_CODE, resultCode)
+                          putExtra(RecorderService.EXTRA_RESULT_DATA, data)
+                      }
+                      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                          startForegroundService(serviceIntent)
+                      } else {
+                          startService(serviceIntent)
+                      }
+                      moveTaskToBack(true)
+                  }
+              }
+
+              private fun createSectionCard(titleText: String, accentHex: String): LinearLayout {
+                  return LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      background = roundedBg("#111827", "#1F2937", 16, 1)
+                      setPadding(dp(16), dp(14), dp(16), dp(16))
+                      val header = TextView(this@MainActivity).apply {
+                          text = titleText
+                          setTextColor(Color.parseColor(accentHex))
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+                          paint.isFakeBoldText = true
+                          setPadding(0, 0, 0, dp(10))
+                      }
+                      addView(header)
+                  }
+              }
+
+              private fun createLabel(textStr: String): TextView {
+                  return TextView(this).apply {
+                      text = textStr
+                      setTextColor(Color.parseColor("#94A3B8"))
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                      setPadding(0, dp(10), 0, dp(6))
+                  }
+              }
+
+              private fun createSegmentedButtons(
+                  items: List<String>,
+                  defaultIndex: Int,
+                  onSelect: (Int) -> Unit
+              ): LinearLayout {
+                  val row = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      weightSum = items.size.toFloat()
+                  }
+                  val buttons = mutableListOf<TextView>()
+
+                  fun updateSelection(selectedIdx: Int) {
+                      buttons.forEachIndexed { idx, tv ->
+                          if (idx == selectedIdx) {
+                              tv.background = roundedBg("#FF6B00", "#FFA657", 10, 2)
+                              tv.setTextColor(Color.WHITE)
+                          } else {
+                              tv.background = roundedBg("#1E293B", "#334155", 10, 1)
+                              tv.setTextColor(Color.parseColor("#CBD5E1"))
+                          }
+                      }
+                  }
+
+                  items.forEachIndexed { index, label ->
+                      val btn = TextView(this).apply {
+                          text = label
+                          gravity = Gravity.CENTER
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
+                          paint.isFakeBoldText = true
+                          setPadding(dp(4), dp(10), dp(4), dp(10))
+                          setOnClickListener {
+                              updateSelection(index)
+                              onSelect(index)
+                          }
+                      }
+                      val lp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f).apply {
+                          setMargins(dp(3), dp(3), dp(3), dp(3))
+                      }
+                      buttons.add(btn)
+                      row.addView(btn, lp)
+                  }
+                  updateSelection(defaultIndex.coerceIn(0, items.lastIndex))
+                  return row
+              }
+
+              private fun createToggleRow(
+                  parent: LinearLayout,
+                  title: String,
+                  desc: String,
+                  initial: Boolean
+              ): Switch {
+                  val row = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      gravity = Gravity.CENTER_VERTICAL
+                      background = roundedBg("#172033", "#1E293B", 12, 1)
+                      setPadding(dp(12), dp(10), dp(12), dp(10))
+                      layoutParams = LinearLayout.LayoutParams(
+                          LinearLayout.LayoutParams.MATCH_PARENT,
+                          LinearLayout.LayoutParams.WRAP_CONTENT
+                      ).apply { bottomMargin = dp(8) }
+                  }
+                  val textCol = LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                          marginEnd = dp(8)
+                      }
+                  }
+                  val tvTitle = TextView(this).apply {
+                      text = title
+                      setTextColor(Color.parseColor("#F8FAFC"))
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+                      paint.isFakeBoldText = true
+                  }
+                  val tvDesc = TextView(this).apply {
+                      text = desc
+                      setTextColor(Color.parseColor("#94A3B8"))
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
+                  }
+                  textCol.addView(tvTitle)
+                  textCol.addView(tvDesc)
+
+                  val sw = Switch(this).apply {
+                      isChecked = initial
+                  }
+                  row.addView(textCol)
+                  row.addView(sw)
+                  parent.addView(row)
+                  return sw
+              }
+
+              private fun roundedBg(fillHex: String, strokeHex: String, radiusDp: Int, strokeDp: Int): GradientDrawable {
+                  return GradientDrawable().apply {
+                      setColor(Color.parseColor(fillHex))
+                      cornerRadius = dp(radiusDp).toFloat()
+                      setStroke(dp(strokeDp), Color.parseColor(strokeHex))
+                  }
+              }
+
+              private fun marginParams(bottom: Int): LinearLayout.LayoutParams {
+                  return LinearLayout.LayoutParams(
+                      LinearLayout.LayoutParams.MATCH_PARENT,
+                      LinearLayout.LayoutParams.WRAP_CONTENT
+                  ).apply { bottomMargin = dp(bottom) }
+              }
+
+              private fun dp(value: Int): Int =
+                  TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value.toFloat(), resources.displayMetrics).toInt()
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/superrecorder/a15/RecorderService.kt
+          package com.superrecorder.a15
+
+          import android.Manifest
+          import android.app.*
+          import android.content.*
+          import android.content.pm.PackageManager
+          import android.content.pm.ServiceInfo
+          import android.graphics.*
+          import android.graphics.drawable.GradientDrawable
+          import android.hardware.Sensor
+          import android.hardware.SensorEvent
+          import android.hardware.SensorEventListener
+          import android.hardware.SensorManager
+          import android.hardware.camera2.*
+          import android.hardware.display.DisplayManager
+          import android.hardware.display.VirtualDisplay
+          import android.media.MediaRecorder
+          import android.media.MediaScannerConnection
+          import android.media.projection.MediaProjection
+          import android.media.projection.MediaProjectionManager
+          import android.os.*
+          import android.provider.MediaStore
+          import android.provider.Settings
+          import android.util.TypedValue
+          import android.view.*
+          import android.widget.*
+          import java.io.File
+          import java.text.SimpleDateFormat
+          import java.util.*
+          import kotlin.math.abs
+          import kotlin.math.sqrt
+
+          class RecorderService : Service(), SensorEventListener {
+
+              companion object {
+                  const val ACTION_START = "com.superrecorder.a15.START"
+                  const val ACTION_STOP = "com.superrecorder.a15.STOP"
+                  const val ACTION_PAUSE_RESUME = "com.superrecorder.a15.PAUSE_RESUME"
+                  const val EXTRA_RESULT_CODE = "result_code"
+                  const val EXTRA_RESULT_DATA = "result_data"
+                  private const val CHANNEL_ID = "SuperRecorderA15ChannelV2"
+                  private const val NOTIF_ID = 7702
+              }
+
+              private lateinit var windowManager: WindowManager
+              private lateinit var projectionManager: MediaProjectionManager
+              private var mediaProjection: MediaProjection? = null
+              private var virtualDisplay: VirtualDisplay? = null
+              private var mediaRecorder: MediaRecorder? = null
+              private var wakeLock: PowerManager.WakeLock? = null
+
+              private lateinit var settings: RecordingSettings
+              private var outputFilePath: String = ""
+              private var isRecording = false
+              private var isPaused = false
+
+              private val mainHandler = Handler(Looper.getMainLooper())
+              private var elapsedSeconds = 0
+              private var tvFloatingTimer: TextView? = null
+              private var btnFloatingPause: TextView? = null
+
+              private var floatingRootView: View? = null
+              private var brushOverlayView: View? = null
+              private var regionMaskView: View? = null
+              private var countdownOverlayView: View? = null
+              private var watermarkOverlayView: View? = null
+              private var facecamOverlayView: View? = null
+
+              private var cameraDevice: CameraDevice? = null
+              private var cameraCaptureSession: CameraCaptureSession? = null
+
+              private var sensorManager: SensorManager? = null
+              private var lastShakeTime = 0L
+              private var screenOffReceiver: BroadcastReceiver? = null
+
+              private fun tr(key: String): String = AppStrings.get(settings.lang, key)
+
+              private val timerRunnable = object : Runnable {
+                  override fun run() {
+                      if (isRecording && !isPaused) {
+                          elapsedSeconds++
+                          val mins = elapsedSeconds / 60
+                          val secs = elapsedSeconds % 60
+                          tvFloatingTimer?.text = String.format(Locale.US, "%02d:%02d", mins, secs)
+                      }
+                      if (isRecording) {
+                          mainHandler.postDelayed(this, 1000)
+                      }
+                  }
+              }
+
+              override fun onCreate() {
+                  super.onCreate()
+                  windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                  projectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+                  createNotificationChannel()
+              }
+
+              override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+                  when (intent?.action) {
+                      ACTION_START -> {
+                          if (!isRecording) {
+                              settings = PrefsManager.loadSettings(this)
+                              val resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, Activity.RESULT_CANCELED)
+                              val resultData: Intent? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                  intent.getParcelableExtra(EXTRA_RESULT_DATA, Intent::class.java)
+                              } else {
+                                  @Suppress("DEPRECATION")
+                                  intent.getParcelableExtra(EXTRA_RESULT_DATA)
+                              }
+
+                              if (resultData != null) {
+                                  startForegroundWithProjectionType(tr("prep_notif"))
+                                  runCountdownThenStart(resultCode, resultData)
+                              }
+                          }
+                      }
+                      ACTION_PAUSE_RESUME -> togglePauseResume()
+                      ACTION_STOP -> stopRecordingAndCleanup()
+                  }
+                  return START_NOT_STICKY
+              }
+
+              private fun startForegroundWithProjectionType(statusText: String) {
+                  val notif = buildNotification(statusText)
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                      startForeground(NOTIF_ID, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
+                  } else {
+                      startForeground(NOTIF_ID, notif)
+                  }
+              }
+
+              private fun runCountdownThenStart(resultCode: Int, resultData: Intent) {
+                  val cd = settings.countdownSec
+                  if (cd <= 0 || !Settings.canDrawOverlays(this)) {
+                      beginScreenCapture(resultCode, resultData)
+                      return
+                  }
+
+                  val tvCount = TextView(this).apply {
+                      text = cd.toString()
+                      setTextColor(Color.WHITE)
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 64f)
+                      paint.isFakeBoldText = true
+                      gravity = Gravity.CENTER
+                      background = GradientDrawable().apply {
+                          setColor(Color.argb(220, 255, 107, 0))
+                          cornerRadius = dp(65).toFloat()
+                          setStroke(dp(3), Color.WHITE)
+                      }
+                  }
+
+                  val frame = FrameLayout(this).apply {
+                      addView(tvCount, FrameLayout.LayoutParams(dp(130), dp(130), Gravity.CENTER))
+                  }
+
+                  val params = WindowManager.LayoutParams(
+                      WindowManager.LayoutParams.WRAP_CONTENT,
+                      WindowManager.LayoutParams.WRAP_CONTENT,
+                      overlayType(),
+                      WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                      PixelFormat.TRANSLUCENT
+                  ).apply { gravity = Gravity.CENTER }
+
+                  countdownOverlayView = frame
+                  windowManager.addView(frame, params)
+
+                  var remaining = cd
+                  val cdRunnable = object : Runnable {
+                      override fun run() {
+                          remaining--
+                          if (remaining > 0) {
+                              tvCount.text = remaining.toString()
+                              mainHandler.postDelayed(this, 1000)
+                          } else {
+                              removeSafe(countdownOverlayView)
+                              countdownOverlayView = null
+                              beginScreenCapture(resultCode, resultData)
+                          }
+                      }
+                  }
+                  mainHandler.postDelayed(cdRunnable, 1000)
+              }
+
+              private fun beginScreenCapture(resultCode: Int, resultData: Intent) {
+                  try {
+                      val (videoW, videoH) = calculateTargetDimensions()
+                      outputFilePath = createOutputFile()
+
+                      mediaRecorder = try {
+                          buildConfiguredRecorder(videoW, videoH, settings.useHevc)
+                      } catch (_: Exception) {
+                          buildConfiguredRecorder(videoW, videoH, false)
+                      }
+
+                      mediaProjection = projectionManager.getMediaProjection(resultCode, resultData)?.apply {
+                          registerCallback(object : MediaProjection.Callback() {
+                              override fun onStop() {
+                                  if (isRecording) stopRecordingAndCleanup()
+                              }
+                          }, mainHandler)
+                      }
+
+                      val dm = resources.displayMetrics
+                      virtualDisplay = mediaProjection?.createVirtualDisplay(
+                          "SuperRecorderA15DisplayV2",
+                          videoW,
+                          videoH,
+                          dm.densityDpi,
+                          DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                          mediaRecorder?.surface,
+                          null,
+                          null
+                      )
+
+                      mediaRecorder?.start()
+                      isRecording = true
+                      isPaused = false
+                      elapsedSeconds = 0
+
+                      if (settings.keepScreenAwake) acquireWakeLock()
+
+                      if (settings.mode == 2 && Settings.canDrawOverlays(this)) {
+                          showRegionFramingMask()
+                      }
+                      if (settings.showWatermark && Settings.canDrawOverlays(this)) {
+                          showLiveWatermarkOverlay()
+                      }
+                      if (settings.enableFacecam && Settings.canDrawOverlays(this)) {
+                          showFacecamOverlay()
+                      }
+                      if (settings.showFloating && Settings.canDrawOverlays(this)) {
+                          showFloatingController()
+                      }
+
+                      if (settings.shakeToStop) registerShakeSensor()
+                      if (settings.stopOnScreenOff) registerScreenOffReceiver()
+
+                      startForegroundWithProjectionType(tr("rec_notif"))
+                      mainHandler.post(timerRunnable)
+
+                  } catch (e: Exception) {
+                      Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                      stopRecordingAndCleanup()
+                  }
+              }
+
+              private fun buildConfiguredRecorder(videoW: Int, videoH: Int, useHevc: Boolean): MediaRecorder {
+                  return (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                      MediaRecorder(this)
+                  } else {
+                      @Suppress("DEPRECATION")
+                      MediaRecorder()
+                  }).apply {
+                      if (settings.enableMic) {
+                          setAudioSource(MediaRecorder.AudioSource.MIC)
+                      }
+                      setVideoSource(MediaRecorder.VideoSource.SURFACE)
+                      setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                      setOutputFile(outputFilePath)
+                      setVideoEncoder(
+                          if (useHevc) MediaRecorder.VideoEncoder.HEVC
+                          else MediaRecorder.VideoEncoder.H264
+                      )
+                      if (settings.enableMic) {
+                          setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                          setAudioEncodingBitRate(128000)
+                          setAudioSamplingRate(44100)
+                      }
+                      setVideoSize(videoW, videoH)
+                      setVideoFrameRate(settings.fps)
+                      setVideoEncodingBitRate(settings.bitrateMbps * 1_000_000)
+                      prepare()
+                  }
+              }
+
+              private fun acquireWakeLock() {
+                  try {
+                      val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+                      @Suppress("DEPRECATION")
+                      wakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ON_AFTER_RELEASE, "SuperRecorder:AwakeLock")
+                      wakeLock?.acquire(3 * 60 * 60 * 1000L)
+                  } catch (_: Exception) {}
+              }
+
+              private fun calculateTargetDimensions(): Pair<Int, Int> {
+                  val baseShort = when (settings.resolutionIndex) {
+                      0 -> 1072
+                      1 -> 720
+                      else -> 480
+                  }
+                  val baseLong = when (settings.resolutionIndex) {
+                      0 -> 2336
+                      1 -> 1552
+                      else -> 1040
+                  }
+
+                  return when (settings.mode) {
+                      0 -> Pair(baseShort, baseLong)
+                      1 -> Pair(baseLong, baseShort)
+                      else -> Pair(baseShort, baseLong)
+                  }
+              }
+
+              private fun showLiveWatermarkOverlay() {
+                  if (watermarkOverlayView != null) return
+                  val badge = TextView(this).apply {
+                      text = "● REC • Galaxy A15 Studio"
+                      setTextColor(Color.argb(210, 255, 255, 255))
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
+                      paint.isFakeBoldText = true
+                      background = GradientDrawable().apply {
+                          setColor(Color.argb(120, 15, 23, 42))
+                          cornerRadius = dp(12).toFloat()
+                          setStroke(dp(1), Color.argb(140, 255, 107, 0))
+                      }
+                      setPadding(dp(10), dp(5), dp(10), dp(5))
+                  }
+
+                  val params = WindowManager.LayoutParams(
+                      WindowManager.LayoutParams.WRAP_CONTENT,
+                      WindowManager.LayoutParams.WRAP_CONTENT,
+                      overlayType(),
+                      WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                      PixelFormat.TRANSLUCENT
+                  ).apply {
+                      gravity = Gravity.BOTTOM or Gravity.END
+                      x = dp(20)
+                      y = dp(70)
+                  }
+
+                  makeDraggable(badge, params)
+                  watermarkOverlayView = badge
+                  windowManager.addView(badge, params)
+              }
+
+              private fun showFacecamOverlay() {
+                  if (facecamOverlayView != null) return
+                  if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) return
+
+                  val container = FrameLayout(this).apply {
+                      background = GradientDrawable().apply {
+                          setColor(Color.BLACK)
+                          cornerRadius = dp(18).toFloat()
+                          setStroke(dp(2), Color.parseColor("#38BDF8"))
+                      }
+                      setPadding(dp(2), dp(2), dp(2), dp(2))
+                  }
+
+                  val textureView = TextureView(this)
+                  container.addView(textureView, FrameLayout.LayoutParams(dp(115), dp(150)))
+
+                  textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
+                      override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
+                          openFrontCamera(surface)
+                      }
+                      override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
+                      override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+                          closeFrontCamera()
+                          return true
+                      }
+                      override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
+                  }
+
+                  val params = WindowManager.LayoutParams(
+                      WindowManager.LayoutParams.WRAP_CONTENT,
+                      WindowManager.LayoutParams.WRAP_CONTENT,
+                      overlayType(),
+                      WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                      PixelFormat.TRANSLUCENT
+                  ).apply {
+                      gravity = Gravity.TOP or Gravity.END
+                      x = dp(18)
+                      y = dp(120)
+                  }
+
+                  makeDraggable(container, params)
+                  facecamOverlayView = container
+                  windowManager.addView(container, params)
+              }
+
+              private fun openFrontCamera(surfaceTexture: SurfaceTexture) {
+                  try {
+                      if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) return
+                      val cm = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+                      val frontId = cm.cameraIdList.firstOrNull { id ->
+                          cm.getCameraCharacteristics(id).get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT
+                      } ?: cm.cameraIdList.firstOrNull() ?: return
+
+                      surfaceTexture.setDefaultBufferSize(640, 480)
+                      val previewSurface = Surface(surfaceTexture)
+
+                      cm.openCamera(frontId, object : CameraDevice.StateCallback() {
+                          override fun onOpened(camera: CameraDevice) {
+                              cameraDevice = camera
+                              try {
+                                  val reqBuilder = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
+                                      addTarget(previewSurface)
+                                  }
+                                  @Suppress("DEPRECATION")
+                                  camera.createCaptureSession(
+                                      listOf(previewSurface),
+                                      object : CameraCaptureSession.StateCallback() {
+                                          override fun onConfigured(session: CameraCaptureSession) {
+                                              cameraCaptureSession = session
+                                              try {
+                                                  session.setRepeatingRequest(reqBuilder.build(), null, mainHandler)
+                                              } catch (_: Exception) {}
+                                          }
+                                          override fun onConfigureFailed(session: CameraCaptureSession) {}
+                                      },
+                                      mainHandler
+                                  )
+                              } catch (_: Exception) {}
+                          }
+                          override fun onDisconnected(camera: CameraDevice) { closeFrontCamera() }
+                          override fun onError(camera: CameraDevice, error: Int) { closeFrontCamera() }
+                      }, mainHandler)
+                  } catch (_: Exception) {}
+              }
+
+              private fun closeFrontCamera() {
+                  try { cameraCaptureSession?.close() } catch (_: Exception) {}
+                  cameraCaptureSession = null
+                  try { cameraDevice?.close() } catch (_: Exception) {}
+                  cameraDevice = null
+              }
+
+              private fun makeDraggable(targetView: View, params: WindowManager.LayoutParams) {
+                  var startX = 0
+                  var startY = 0
+                  var touchX = 0f
+                  var touchY = 0f
+
+                  targetView.setOnTouchListener { _, event ->
+                      when (event.action) {
+                          MotionEvent.ACTION_DOWN -> {
+                              startX = params.x
+                              startY = params.y
+                              touchX = event.rawX
+                              touchY = event.rawY
+                              true
+                          }
+                          MotionEvent.ACTION_MOVE -> {
+                              val dx = (event.rawX - touchX).toInt()
+                              val dy = (event.rawY - touchY).toInt()
+                              params.x = startX - dx
+                              params.y = startY + dy
+                              windowManager.updateViewLayout(targetView, params)
+                              true
+                          }
+                          else -> false
+                      }
+                  }
+              }
+
+              private fun showRegionFramingMask() {
+                  val maskView = object : View(this) {
+                      private val maskPaint = Paint().apply { color = Color.BLACK }
+                      private val clearPaint = Paint().apply {
+                          color = Color.TRANSPARENT
+                          xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+                      }
+                      private val frameBorder = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                          color = Color.parseColor("#FF6B00")
+                          style = Paint.Style.STROKE
+                          strokeWidth = dp(2).toFloat()
+                      }
+
+                      init {
+                          setLayerType(LAYER_TYPE_SOFTWARE, null)
+                      }
+
+                      override fun onDraw(canvas: Canvas) {
+                          super.onDraw(canvas)
+                          canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), maskPaint)
+                          val l = settings.regionLeft.toFloat()
+                          val t = settings.regionTop.toFloat()
+                          val r = (settings.regionLeft + settings.regionWidth).toFloat()
+                          val b = (settings.regionTop + settings.regionHeight).toFloat()
+                          canvas.drawRect(l, t, r, b, clearPaint)
+                          canvas.drawRect(l, t, r, b, frameBorder)
+                      }
+                  }
+
+                  val params = WindowManager.LayoutParams(
+                      WindowManager.LayoutParams.MATCH_PARENT,
+                      WindowManager.LayoutParams.MATCH_PARENT,
+                      overlayType(),
+                      WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                              WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                              WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                      PixelFormat.TRANSLUCENT
+                  )
+                  regionMaskView = maskView
+                  windowManager.addView(maskView, params)
+              }
+
+              private fun showFloatingController() {
+                  val root = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      gravity = Gravity.CENTER_VERTICAL
+                      background = GradientDrawable().apply {
+                          setColor(Color.argb(230, 15, 23, 42))
+                          cornerRadius = dp(28).toFloat()
+                          setStroke(dp(2), Color.parseColor("#FF6B00"))
+                      }
+                      setPadding(dp(10), dp(6), dp(10), dp(6))
+                  }
+
+                  val tvTimer = TextView(this).apply {
+                      text = "00:00"
+                      setTextColor(Color.WHITE)
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+                      paint.isFakeBoldText = true
+                      setPadding(dp(6), dp(4), dp(8), dp(4))
+                  }
+                  tvFloatingTimer = tvTimer
+
+                  val toolsRow = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      visibility = View.GONE
+                  }
+
+                  val btnPause = createFloatingChip("❚❚", "#0284C7") { togglePauseResume() }
+                  btnFloatingPause = btnPause
+                  toolsRow.addView(btnPause)
+
+                  if (settings.enableBrush) {
+                      val btnBrush = createFloatingChip("✎", "#8B5CF6") { toggleBrushOverlay() }
+                      toolsRow.addView(btnBrush)
+                  }
+
+                  val btnCam = createFloatingChip("📷", "#10B981") {
+                      if (facecamOverlayView == null) {
+                          showFacecamOverlay()
+                      } else {
+                          closeFrontCamera()
+                          removeSafe(facecamOverlayView)
+                          facecamOverlayView = null
+                      }
+                  }
+                  toolsRow.addView(btnCam)
+
+                  val btnHide = createFloatingChip("👁", "#475569") {
+                      removeSafe(floatingRootView)
+                      floatingRootView = null
+                      Toast.makeText(this, tr("hide_float_toast"), Toast.LENGTH_SHORT).show()
+                  }
+                  toolsRow.addView(btnHide)
+
+                  val btnStop = createFloatingChip("■", "#EF4444") { stopRecordingAndCleanup() }
+                  toolsRow.addView(btnStop)
+
+                  root.addView(tvTimer)
+                  root.addView(toolsRow)
+
+                  val params = WindowManager.LayoutParams(
+                      WindowManager.LayoutParams.WRAP_CONTENT,
+                      WindowManager.LayoutParams.WRAP_CONTENT,
+                      overlayType(),
+                      WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                      PixelFormat.TRANSLUCENT
+                  ).apply {
+                      gravity = Gravity.TOP or Gravity.START
+                      x = 20
+                      y = 300
+                  }
+
+                  var startX = 0
+                  var startY = 0
+                  var touchX = 0f
+                  var touchY = 0f
+                  var isMoved = false
+
+                  tvTimer.setOnTouchListener { _, event ->
+                      when (event.action) {
+                          MotionEvent.ACTION_DOWN -> {
+                              startX = params.x
+                              startY = params.y
+                              touchX = event.rawX
+                              touchY = event.rawY
+                              isMoved = false
+                              true
+                          }
+                          MotionEvent.ACTION_MOVE -> {
+                              val dx = (event.rawX - touchX).toInt()
+                              val dy = (event.rawY - touchY).toInt()
+                              if (abs(dx) > 10 || abs(dy) > 10) {
+                                  isMoved = true
+                                  params.x = startX + dx
+                                  params.y = startY + dy
+                                  windowManager.updateViewLayout(root, params)
+                              }
+                              true
+                          }
+                          MotionEvent.ACTION_UP -> {
+                              if (!isMoved) {
+                                  toolsRow.visibility = if (toolsRow.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+                              }
+                              true
+                          }
+                          else -> false
+                      }
+                  }
+
+                  floatingRootView = root
+                  windowManager.addView(root, params)
+              }
+
+              private fun createFloatingChip(symbol: String, colorHex: String, onClick: () -> Unit): TextView {
+                  return TextView(this).apply {
+                      text = symbol
+                      setTextColor(Color.WHITE)
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+                      gravity = Gravity.CENTER
+                      background = GradientDrawable().apply {
+                          setColor(Color.parseColor(colorHex))
+                          cornerRadius = dp(16).toFloat()
+                      }
+                      val lp = LinearLayout.LayoutParams(dp(32), dp(32)).apply {
+                          marginStart = dp(6)
+                      }
+                      layoutParams = lp
+                      setOnClickListener { onClick() }
+                  }
+              }
+
+              private fun toggleBrushOverlay() {
+                  if (brushOverlayView != null) {
+                      removeSafe(brushOverlayView)
+                      brushOverlayView = null
+                      return
+                  }
+
+                  val paths = mutableListOf<Pair<Path, Int>>()
+                  var currentPath = Path()
+                  var currentColor = Color.parseColor("#FF3B30")
+
+                  val drawingCanvasView = object : View(this) {
+                      private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                          style = Paint.Style.STROKE
+                          strokeJoin = Paint.Join.ROUND
+                          strokeCap = Paint.Cap.ROUND
+                          strokeWidth = dp(5).toFloat()
+                      }
+
+                      override fun onDraw(canvas: Canvas) {
+                          super.onDraw(canvas)
+                          for ((p, col) in paths) {
+                              paint.color = col
+                              canvas.drawPath(p, paint)
+                          }
+                          paint.color = currentColor
+                          canvas.drawPath(currentPath, paint)
+                      }
+
+                      override fun onTouchEvent(event: MotionEvent): Boolean {
+                          when (event.action) {
+                              MotionEvent.ACTION_DOWN -> {
+                                  currentPath = Path().apply { moveTo(event.x, event.y) }
+                                  invalidate()
+                                  return true
+                              }
+                              MotionEvent.ACTION_MOVE -> {
+                                  currentPath.lineTo(event.x, event.y)
+                                  invalidate()
+                                  return true
+                              }
+                              MotionEvent.ACTION_UP -> {
+                                  paths.add(Pair(currentPath, currentColor))
+                                  currentPath = Path()
+                                  invalidate()
+                                  return true
+                              }
+                          }
+                          return false
+                      }
+                  }
+
+                  val rootFrame = FrameLayout(this)
+                  rootFrame.addView(drawingCanvasView, FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
+
+                  val bar = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      background = GradientDrawable().apply {
+                          setColor(Color.argb(235, 15, 23, 42))
+                          cornerRadius = dp(20).toFloat()
+                          setStroke(dp(1), Color.parseColor("#334155"))
+                      }
+                      setPadding(dp(12), dp(8), dp(12), dp(8))
+                  }
+
+                  val colors = listOf("#FF3B30", "#FFCC00", "#34C759", "#38BDF8", "#FFFFFF")
+                  colors.forEach { hex ->
+                      val colorDot = View(this).apply {
+                          background = GradientDrawable().apply {
+                              setColor(Color.parseColor(hex))
+                              cornerRadius = dp(14).toFloat()
+                          }
+                          layoutParams = LinearLayout.LayoutParams(dp(28), dp(28)).apply { marginEnd = dp(8) }
+                          setOnClickListener { currentColor = Color.parseColor(hex) }
+                      }
+                      bar.addView(colorDot)
+                  }
+
+                  val btnClear = createFloatingChip(tr("clear_brush"), "#475569") {
+                      paths.clear()
+                      currentPath.reset()
+                      drawingCanvasView.invalidate()
+                  }.apply {
+                      layoutParams = LinearLayout.LayoutParams(dp(56), dp(28)).apply { marginEnd = dp(6) }
+                  }
+                  val btnClose = createFloatingChip("✕", "#EF4444") {
+                      removeSafe(brushOverlayView)
+                      brushOverlayView = null
+                  }.apply {
+                      layoutParams = LinearLayout.LayoutParams(dp(32), dp(28))
+                  }
+
+                  bar.addView(btnClear)
+                  bar.addView(btnClose)
+
+                  val barLp = FrameLayout.LayoutParams(
+                      FrameLayout.LayoutParams.WRAP_CONTENT,
+                      FrameLayout.LayoutParams.WRAP_CONTENT
+                  ).apply {
+                      gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+                      bottomMargin = dp(40)
+                  }
+                  rootFrame.addView(bar, barLp)
+
+                  val params = WindowManager.LayoutParams(
+                      WindowManager.LayoutParams.MATCH_PARENT,
+                      WindowManager.LayoutParams.MATCH_PARENT,
+                      overlayType(),
+                      WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                      PixelFormat.TRANSLUCENT
+                  )
+                  brushOverlayView = rootFrame
+                  windowManager.addView(rootFrame, params)
+              }
+
+              private fun togglePauseResume() {
+                  if (!isRecording || Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return
+                  try {
+                      if (!isPaused) {
+                          mediaRecorder?.pause()
+                          isPaused = true
+                          btnFloatingPause?.text = "▶"
+                          startForegroundWithProjectionType(tr("pause_notif"))
+                      } else {
+                          mediaRecorder?.resume()
+                          isPaused = false
+                          btnFloatingPause?.text = "❚❚"
+                          startForegroundWithProjectionType(tr("rec_notif"))
+                      }
+                  } catch (_: Exception) {}
+              }
+
+              private fun stopRecordingAndCleanup() {
+                  mainHandler.removeCallbacks(timerRunnable)
+
+                  closeFrontCamera()
+                  removeSafe(floatingRootView); floatingRootView = null
+                  removeSafe(brushOverlayView); brushOverlayView = null
+                  removeSafe(regionMaskView); regionMaskView = null
+                  removeSafe(countdownOverlayView); countdownOverlayView = null
+                  removeSafe(watermarkOverlayView); watermarkOverlayView = null
+                  removeSafe(facecamOverlayView); facecamOverlayView = null
+
+                  try {
+                      if (wakeLock?.isHeld == true) wakeLock?.release()
+                  } catch (_: Exception) {}
+                  wakeLock = null
+
+                  sensorManager?.unregisterListener(this)
+                  screenOffReceiver?.let {
+                      try { unregisterReceiver(it) } catch (_: Exception) {}
+                      screenOffReceiver = null
+                  }
+
+                  if (isRecording) {
+                      isRecording = false
+                      try {
+                          mediaRecorder?.stop()
+                      } catch (_: Exception) {}
+                      try {
+                          mediaRecorder?.reset()
+                          mediaRecorder?.release()
+                      } catch (_: Exception) {}
+                      mediaRecorder = null
+
+                      virtualDisplay?.release()
+                      virtualDisplay = null
+
+                      mediaProjection?.stop()
+                      mediaProjection = null
+
+                      publishVideoToGallery(outputFilePath)
+                  }
+
+                  @Suppress("DEPRECATION")
+                  stopForeground(true)
+                  stopSelf()
+              }
+
+              private fun createOutputFile(): String {
+                  val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                  val dir = File(getExternalFilesDir(Environment.DIRECTORY_MOVIES), "SuperRecorder_A15")
+                  if (!dir.exists()) dir.mkdirs()
+                  return File(dir, "A15_Pro_$stamp.mp4").absolutePath
+              }
+
+              private fun publishVideoToGallery(sourcePath: String) {
+                  val srcFile = File(sourcePath)
+                  if (!srcFile.exists() || srcFile.length() == 0L) return
+
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                      val values = ContentValues().apply {
+                          put(MediaStore.Video.Media.DISPLAY_NAME, srcFile.name)
+                          put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
+                          put(MediaStore.Video.Media.RELATIVE_PATH, Environment.DIRECTORY_MOVIES + "/SuperRecorder_A15")
+                          put(MediaStore.Video.Media.IS_PENDING, 1)
+                      }
+                      val resolver = contentResolver
+                      val collection = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+                      val itemUri = resolver.insert(collection, values)
+                      if (itemUri != null) {
+                          resolver.openOutputStream(itemUri)?.use { outStream ->
+                              srcFile.inputStream().use { inStream -> inStream.copyTo(outStream) }
+                          }
+                          values.clear()
+                          values.put(MediaStore.Video.Media.IS_PENDING, 0)
+                          resolver.update(itemUri, values, null, null)
+                          srcFile.delete()
+                      }
+                  } else {
+                      MediaScannerConnection.scanFile(this, arrayOf(sourcePath), arrayOf("video/mp4"), null)
+                  }
+
+                  Toast.makeText(this, tr("saved_toast"), Toast.LENGTH_LONG).show()
+              }
+
+              private fun registerShakeSensor() {
+                  sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+                  val accel = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+                  sensorManager?.registerListener(this, accel, SensorManager.SENSOR_DELAY_UI)
+              }
+
+              override fun onSensorChanged(event: SensorEvent?) {
+                  if (event?.sensor?.type == Sensor.TYPE_ACCELEROMETER && isRecording) {
+                      val x = event.values[0]
+                      val y = event.values[1]
+                      val z = event.values[2]
+                      val gForce = sqrt((x * x + y * y + z * z).toDouble()) / SensorManager.GRAVITY_EARTH
+                      if (gForce > 2.7) {
+                          val now = System.currentTimeMillis()
+                          if (now - lastShakeTime > 1500) {
+                              lastShakeTime = now
+                              stopRecordingAndCleanup()
+                          }
+                      }
+                  }
+              }
+
+              override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+
+              private fun registerScreenOffReceiver() {
+                  screenOffReceiver = object : BroadcastReceiver() {
+                      override fun onReceive(context: Context?, intent: Intent?) {
+                          if (intent?.action == Intent.ACTION_SCREEN_OFF && isRecording) {
+                              stopRecordingAndCleanup()
+                          }
+                      }
+                  }
+                  registerReceiver(screenOffReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF))
+              }
+
+              private fun buildNotification(statusText: String): Notification {
+                  val stopIntent = Intent(this, RecorderService::class.java).apply { action = ACTION_STOP }
+                  val stopPending = PendingIntent.getService(
+                      this, 1, stopIntent,
+                      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                  )
+
+                  val pauseIntent = Intent(this, RecorderService::class.java).apply { action = ACTION_PAUSE_RESUME }
+                  val pausePending = PendingIntent.getService(
+                      this, 2, pauseIntent,
+                      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                  )
+
+                  val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                      Notification.Builder(this, CHANNEL_ID)
+                  } else {
+                      @Suppress("DEPRECATION")
+                      Notification.Builder(this)
+                  }
+
+                  return builder
+                      .setContentTitle("Super Recorder A15 Ultra")
+                      .setContentText(statusText)
+                      .setSmallIcon(android.R.drawable.presence_video_online)
+                      .setOngoing(true)
+                      .addAction(
+                          Notification.Action.Builder(
+                              android.R.drawable.ic_media_pause,
+                              if (isPaused) tr("act_resume") else tr("act_pause"),
+                              pausePending
+                          ).build()
+                      )
+                      .addAction(
+                          Notification.Action.Builder(
+                              android.R.drawable.ic_delete,
+                              tr("act_stop"),
+                              stopPending
+                          ).build()
+                      )
+                      .build()
+              }
+
+              private fun createNotificationChannel() {
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                      val channel = NotificationChannel(
+                          CHANNEL_ID,
+                          "Super Recorder Studio Service",
+                          NotificationManager.IMPORTANCE_LOW
+                      )
+                      val nm = getSystemService(NotificationManager::class.java)
+                      nm.createNotificationChannel(channel)
+                  }
+              }
+
+              private fun overlayType(): Int =
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                      WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                  else
+                      @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE
+
+              private fun removeSafe(v: View?) {
+                  if (v != null) {
+                      try { windowManager.removeView(v) } catch (_: Exception) {}
+                  }
+              }
+
+              private fun dp(value: Int): Int =
+                  TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value.toFloat(), resources.displayMetrics).toInt()
+
+              override fun onBind(intent: Intent?): IBinder? = null
+          }
+          EOF
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.5'
+
+      - name: Build Debug APK
+        run: gradle assembleDebug
+
+      - name: Upload Compiled APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SuperRecorder-A15-Ultra-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
